@@ -1,0 +1,12 @@
+version: '3'
+services:
+  resource-library:
+    build: .
+    image: resource-library:latest
+    container_name: resource-library
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./data:/app/server/data
+      - ./uploads:/app/server/uploads
+    restart: unless-stopped
