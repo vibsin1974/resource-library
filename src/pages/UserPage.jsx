@@ -215,6 +215,13 @@ const UserPage = () => {
                                 }}>
                                     <th style={{
                                         padding: '16px 20px',
+                                        textAlign: 'center',
+                                        fontSize: '14px',
+                                        fontWeight: '600',
+                                        width: '60px'
+                                    }}>No.</th>
+                                    <th style={{
+                                        padding: '16px 20px',
                                         textAlign: 'left',
                                         fontSize: '14px',
                                         fontWeight: '600'
@@ -253,6 +260,7 @@ const UserPage = () => {
                                 {paginatedPosts.map((post, index) => {
                                     const category = getCategoryById(post.categoryId);
                                     const attachments = postsWithAttachments[post.id] || [];
+                                    const serialNumber = filteredPosts.length - startIndex - index;
 
                                     return (
                                         <tr
@@ -262,6 +270,15 @@ const UserPage = () => {
                                                 background: index % 2 === 0 ? 'white' : '#fafafa'
                                             }}
                                         >
+                                            <td style={{
+                                                padding: '16px 20px',
+                                                textAlign: 'center',
+                                                fontSize: '14px',
+                                                color: '#6b7280',
+                                                fontWeight: '500'
+                                            }}>
+                                                {serialNumber}
+                                            </td>
                                             <td style={{
                                                 padding: '16px 20px',
                                                 fontSize: '15px',

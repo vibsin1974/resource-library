@@ -53,7 +53,7 @@ const CategoryManager = () => {
 
         try {
             // Direct fetch to bypass potential service issues
-            const response = await fetch(`http://localhost:3001/api/categories/${id}`, {
+            const response = await fetch(`/api/categories/${id}`, {
                 method: 'DELETE',
                 mode: 'cors'
             });

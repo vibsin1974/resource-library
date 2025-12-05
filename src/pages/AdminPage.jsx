@@ -12,6 +12,7 @@ const AdminPage = () => {
         categoryId: ''
     });
     const [selectedFiles, setSelectedFiles] = useState([]);
+    const [isUploading, setIsUploading] = useState(false);
     const [editingPost, setEditingPost] = useState(null);
     const [editFormData, setEditFormData] = useState({ title: '', categoryId: '' });
     const [editAttachments, setEditAttachments] = useState([]);
@@ -56,6 +57,7 @@ const AdminPage = () => {
             return;
         }
 
+        setIsUploading(true);
         try {
             await createPost(formData.title, formData.categoryId, selectedFiles);
             setFormData({ title: '', categoryId: '' });
@@ -65,6 +67,8 @@ const AdminPage = () => {
         } catch (error) {
             console.error('Error creating post:', error);
             alert('업로드 중 오류가 발생했습니다.');
+        } finally {
+            setIsUploading(false);
         }
     };
 
@@ -335,8 +339,52 @@ const AdminPage = () => {
                                     </div>
                                 )}
 
-                                <button type="submit" className="btn btn-primary" style={{ width: '100%' }}>
-                                    <Upload style={{ width: '16px', height: '16px' }} /> 게시물 업로드
+                                {isUploading && (
+                                    <div style={{
+                                        background: '#eff6ff',
+                                        border: '2px solid #3b82f6',
+                                        borderRadius: '12px',
+                                        padding: '20px',
+                                        textAlign: 'center',
+                                        marginBottom: '16px'
+                                    }}>
+                                        <div style={{
+                                            display: 'inline-block',
+                                            width: '40px',
+                                            height: '40px',
+                                            border: '4px solid #e5e7eb',
+                                            borderTop: '4px solid #3b82f6',
+                                            borderRadius: '50%',
+                                            animation: 'spin 1s linear infinite',
+                                            marginBottom: '12px'
+                                        }}></div>
+                                        <p style={{
+                                            fontSize: '16px',
+                                            fontWeight: '600',
+                                            color: '#3b82f6',
+                                            margin: 0
+                                        }}>
+                                            📤 업로드 중입니다...
+                                        </p>
+                                        <p style={{
+                                            fontSize: '14px',
+                                            color: '#6b7280',
+                                            marginTop: '8px',
+                                            marginBottom: 0
+                                        }}>
+                                            잠시만 기다려주세요
+                                        </p>
+                                    </div>
+                                )}
+
+                                <button
+                                    type="submit"
+                                    className="btn btn-primary"
+                                    style={{ width: '100%' }}
+                                    disabled={isUploading}
+                                >
+                                    <Upload style={{ width: '16px', height: '16px' }} />
+                                    {isUploading ? '업로드 중...' : '게시물 업로드'}
                                 </button>
                             </div>
                         </form>
@@ -367,6 +415,13 @@ const AdminPage = () => {
                                         background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                                         color: 'white'
                                     }}>
+                                        <th style={{
+                                            padding: '16px 20px',
+                                            textAlign: 'center',
+                                            fontSize: '14px',
+                                            fontWeight: '600',
+                                            width: '60px'
+                                        }}>No.</th>
                                         <th style={{
                                             padding: '16px 20px',
                                             textAlign: 'left',
@@ -406,6 +461,7 @@ const AdminPage = () => {
                                 <tbody>
                                     {posts.map((post, index) => {
                                         const category = getCategoryById(post.categoryId);
+                                        const serialNumber = posts.length - index;
                                         return (
                                             <tr
                                                 key={post.id}
@@ -414,6 +470,15 @@ const AdminPage = () => {
                                                     background: index % 2 === 0 ? 'white' : '#fafafa'
                                                 }}
                                             >
+                                                <td style={{
+                                                    padding: '16px 20px',
+                                                    textAlign: 'center',
+                                                    fontSize: '14px',
+                                                    color: '#6b7280',
+                                                    fontWeight: '500'
+                                                }}>
+                                                    {serialNumber}
+                                                </td>
                                                 <td style={{
                                                     padding: '16px 20px',
                                                     fontSize: '15px',
@@ -476,208 +541,211 @@ const AdminPage = () => {
                                     })}
                                 </tbody>
                             </table>
-                        )}
-                    </div>
+                        )
+                        }
+                    </div >
                 )}
 
                 {/* Categories Tab */}
                 {activeTab === 'categories' && <CategoryManager />}
-            </div>
+            </div >
 
             {/* Edit Modal */}
-            {editingPost && (
-                <div style={{
-                    position: 'fixed',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    background: 'rgba(0, 0, 0, 0.5)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    zIndex: 1000
-                }}>
+            {
+                editingPost && (
                     <div style={{
-                        background: 'white',
-                        borderRadius: '16px',
-                        padding: '32px',
-                        maxWidth: '600px',
-                        width: '90%',
-                        maxHeight: '90vh',
-                        overflow: 'auto'
+                        position: 'fixed',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        background: 'rgba(0, 0, 0, 0.5)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        zIndex: 1000
                     }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-                            <h2 style={{ fontSize: '20px', fontWeight: '600' }}>게시물 수정</h2>
-                            <button
-                                onClick={() => {
-                                    setEditingPost(null);
-                                    setEditAttachments([]);
-                                    setNewAttachmentFile(null);
-                                }}
-                                style={{
-                                    background: 'none',
-                                    border: 'none',
-                                    cursor: 'pointer',
-                                    padding: '4px'
-                                }}
-                            >
-                                <X style={{ width: '24px', height: '24px' }} />
-                            </button>
-                        </div>
+                        <div style={{
+                            background: 'white',
+                            borderRadius: '16px',
+                            padding: '32px',
+                            maxWidth: '600px',
+                            width: '90%',
+                            maxHeight: '90vh',
+                            overflow: 'auto'
+                        }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+                                <h2 style={{ fontSize: '20px', fontWeight: '600' }}>게시물 수정</h2>
+                                <button
+                                    onClick={() => {
+                                        setEditingPost(null);
+                                        setEditAttachments([]);
+                                        setNewAttachmentFile(null);
+                                    }}
+                                    style={{
+                                        background: 'none',
+                                        border: 'none',
+                                        cursor: 'pointer',
+                                        padding: '4px'
+                                    }}
+                                >
+                                    <X style={{ width: '24px', height: '24px' }} />
+                                </button>
+                            </div>
 
-                        <form onSubmit={handleUpdate}>
-                            <div style={{ display: 'grid', gap: '16px' }}>
-                                <div>
-                                    <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500' }}>
-                                        제목
-                                    </label>
-                                    <input
-                                        type="text"
-                                        className="input"
-                                        value={editFormData.title}
-                                        onChange={(e) => setEditFormData({ ...editFormData, title: e.target.value })}
-                                        placeholder="게시물 제목을 입력하세요"
-                                        required
-                                    />
-                                </div>
+                            <form onSubmit={handleUpdate}>
+                                <div style={{ display: 'grid', gap: '16px' }}>
+                                    <div>
+                                        <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500' }}>
+                                            제목
+                                        </label>
+                                        <input
+                                            type="text"
+                                            className="input"
+                                            value={editFormData.title}
+                                            onChange={(e) => setEditFormData({ ...editFormData, title: e.target.value })}
+                                            placeholder="게시물 제목을 입력하세요"
+                                            required
+                                        />
+                                    </div>
 
-                                <div>
-                                    <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500' }}>
-                                        카테고리
-                                    </label>
-                                    <select
-                                        className="input"
-                                        value={editFormData.categoryId}
-                                        onChange={(e) => setEditFormData({ ...editFormData, categoryId: e.target.value })}
-                                        required
-                                        style={{ cursor: 'pointer' }}
-                                    >
-                                        <option value="">카테고리 선택</option>
-                                        {categories.map(cat => (
-                                            <option key={cat.id} value={cat.id}>
-                                                {cat.icon} {cat.name}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
+                                    <div>
+                                        <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500' }}>
+                                            카테고리
+                                        </label>
+                                        <select
+                                            className="input"
+                                            value={editFormData.categoryId}
+                                            onChange={(e) => setEditFormData({ ...editFormData, categoryId: e.target.value })}
+                                            required
+                                            style={{ cursor: 'pointer' }}
+                                        >
+                                            <option value="">카테고리 선택</option>
+                                            {categories.map(cat => (
+                                                <option key={cat.id} value={cat.id}>
+                                                    {cat.icon} {cat.name}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
 
-                                {/* Attachments Section */}
-                                <div>
-                                    <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500' }}>
-                                        첨부파일 ({editAttachments.length}/5)
-                                    </label>
+                                    {/* Attachments Section */}
+                                    <div>
+                                        <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500' }}>
+                                            첨부파일 ({editAttachments.length}/5)
+                                        </label>
 
-                                    {/* Current Attachments */}
-                                    <div style={{
-                                        background: '#f9fafb',
-                                        padding: '12px',
-                                        borderRadius: '8px',
-                                        marginBottom: '12px'
-                                    }}>
-                                        {editAttachments.length === 0 ? (
-                                            <p style={{ fontSize: '13px', color: '#9ca3af', textAlign: 'center', margin: 0 }}>
-                                                첨부파일이 없습니다
-                                            </p>
-                                        ) : (
-                                            <div style={{ display: 'grid', gap: '8px' }}>
-                                                {editAttachments.map((attachment) => (
-                                                    <div
-                                                        key={attachment.id}
-                                                        style={{
-                                                            display: 'flex',
-                                                            justifyContent: 'space-between',
-                                                            alignItems: 'center',
-                                                            padding: '10px',
-                                                            background: 'white',
-                                                            borderRadius: '6px',
-                                                            border: '1px solid #e5e7eb'
-                                                        }}
-                                                    >
-                                                        <div style={{ flex: 1 }}>
-                                                            <div style={{ fontSize: '13px', fontWeight: '500', color: '#374151', marginBottom: '2px' }}>
-                                                                📎 {attachment.file_name}
-                                                            </div>
-                                                            <div style={{ fontSize: '11px', color: '#9ca3af' }}>
-                                                                {formatFileSize(attachment.file_size)}
-                                                            </div>
-                                                        </div>
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => handleDeleteAttachment(attachment.id)}
+                                        {/* Current Attachments */}
+                                        <div style={{
+                                            background: '#f9fafb',
+                                            padding: '12px',
+                                            borderRadius: '8px',
+                                            marginBottom: '12px'
+                                        }}>
+                                            {editAttachments.length === 0 ? (
+                                                <p style={{ fontSize: '13px', color: '#9ca3af', textAlign: 'center', margin: 0 }}>
+                                                    첨부파일이 없습니다
+                                                </p>
+                                            ) : (
+                                                <div style={{ display: 'grid', gap: '8px' }}>
+                                                    {editAttachments.map((attachment) => (
+                                                        <div
+                                                            key={attachment.id}
                                                             style={{
-                                                                background: '#fee2e2',
-                                                                border: 'none',
-                                                                borderRadius: '4px',
-                                                                padding: '6px 10px',
-                                                                cursor: 'pointer',
-                                                                color: '#dc2626',
-                                                                fontSize: '12px'
+                                                                display: 'flex',
+                                                                justifyContent: 'space-between',
+                                                                alignItems: 'center',
+                                                                padding: '10px',
+                                                                background: 'white',
+                                                                borderRadius: '6px',
+                                                                border: '1px solid #e5e7eb'
                                                             }}
                                                         >
-                                                            <Trash2 style={{ width: '14px', height: '14px' }} />
-                                                        </button>
-                                                    </div>
-                                                ))}
+                                                            <div style={{ flex: 1 }}>
+                                                                <div style={{ fontSize: '13px', fontWeight: '500', color: '#374151', marginBottom: '2px' }}>
+                                                                    📎 {attachment.file_name}
+                                                                </div>
+                                                                <div style={{ fontSize: '11px', color: '#9ca3af' }}>
+                                                                    {formatFileSize(attachment.file_size)}
+                                                                </div>
+                                                            </div>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleDeleteAttachment(attachment.id)}
+                                                                style={{
+                                                                    background: '#fee2e2',
+                                                                    border: 'none',
+                                                                    borderRadius: '4px',
+                                                                    padding: '6px 10px',
+                                                                    cursor: 'pointer',
+                                                                    color: '#dc2626',
+                                                                    fontSize: '12px'
+                                                                }}
+                                                            >
+                                                                <Trash2 style={{ width: '14px', height: '14px' }} />
+                                                            </button>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* Add New Attachment */}
+                                        {editAttachments.length < 5 && (
+                                            <div style={{
+                                                border: '2px dashed #d1d5db',
+                                                borderRadius: '8px',
+                                                padding: '12px'
+                                            }}>
+                                                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                                    <input
+                                                        type="file"
+                                                        id="edit-file-input"
+                                                        onChange={(e) => setNewAttachmentFile(e.target.files[0])}
+                                                        style={{ flex: 1, fontSize: '13px' }}
+                                                    />
+                                                    <button
+                                                        type="button"
+                                                        onClick={handleAddAttachment}
+                                                        className="btn btn-secondary"
+                                                        style={{ padding: '6px 12px', fontSize: '12px' }}
+                                                        disabled={!newAttachmentFile}
+                                                    >
+                                                        <Plus style={{ width: '14px', height: '14px' }} /> 추가
+                                                    </button>
+                                                </div>
                                             </div>
                                         )}
                                     </div>
 
-                                    {/* Add New Attachment */}
-                                    {editAttachments.length < 5 && (
-                                        <div style={{
-                                            border: '2px dashed #d1d5db',
-                                            borderRadius: '8px',
-                                            padding: '12px'
-                                        }}>
-                                            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                                                <input
-                                                    type="file"
-                                                    id="edit-file-input"
-                                                    onChange={(e) => setNewAttachmentFile(e.target.files[0])}
-                                                    style={{ flex: 1, fontSize: '13px' }}
-                                                />
-                                                <button
-                                                    type="button"
-                                                    onClick={handleAddAttachment}
-                                                    className="btn btn-secondary"
-                                                    style={{ padding: '6px 12px', fontSize: '12px' }}
-                                                    disabled={!newAttachmentFile}
-                                                >
-                                                    <Plus style={{ width: '14px', height: '14px' }} /> 추가
-                                                </button>
-                                            </div>
-                                        </div>
-                                    )}
+                                    <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
+                                        <button
+                                            type="button"
+                                            className="btn btn-secondary"
+                                            onClick={() => {
+                                                setEditingPost(null);
+                                                setEditAttachments([]);
+                                                setNewAttachmentFile(null);
+                                            }}
+                                            style={{ flex: 1 }}
+                                        >
+                                            취소
+                                        </button>
+                                        <button
+                                            type="submit"
+                                            className="btn btn-primary"
+                                            style={{ flex: 1 }}
+                                        >
+                                            수정
+                                        </button>
+                                    </div>
                                 </div>
-
-                                <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
-                                    <button
-                                        type="button"
-                                        className="btn btn-secondary"
-                                        onClick={() => {
-                                            setEditingPost(null);
-                                            setEditAttachments([]);
-                                            setNewAttachmentFile(null);
-                                        }}
-                                        style={{ flex: 1 }}
-                                    >
-                                        취소
-                                    </button>
-                                    <button
-                                        type="submit"
-                                        className="btn btn-primary"
-                                        style={{ flex: 1 }}
-                                    >
-                                        수정
-                                    </button>
-                                </div>
-                            </div>
-                        </form>
+                            </form>
+                        </div>
                     </div>
-                </div>
-            )}
-        </div>
+                )
+            }
+        </div >
     );
 };
 
