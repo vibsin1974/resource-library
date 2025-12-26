@@ -13,10 +13,13 @@ const AdminPage = () => {
     });
     const [selectedFiles, setSelectedFiles] = useState([]);
     const [isUploading, setIsUploading] = useState(false);
+    const [uploadProgress, setUploadProgress] = useState(0);
+    const [showUploadComplete, setShowUploadComplete] = useState(false);
     const [editingPost, setEditingPost] = useState(null);
     const [editFormData, setEditFormData] = useState({ title: '', categoryId: '' });
     const [editAttachments, setEditAttachments] = useState([]);
     const [newAttachmentFile, setNewAttachmentFile] = useState(null);
+    const [attachmentUploadProgress, setAttachmentUploadProgress] = useState(0);
 
     useEffect(() => {
         loadData();
@@ -58,15 +61,28 @@ const AdminPage = () => {
         }
 
         setIsUploading(true);
+        setUploadProgress(0);
         try {
-            await createPost(formData.title, formData.categoryId, selectedFiles);
+            await createPost(formData.title, formData.categoryId, selectedFiles, (progress) => {
+                // 진행률을 정확히 반영
+                setUploadProgress(Math.min(progress, 100));
+            });
+            // 업로드 완료 시 100%로 설정
+            setUploadProgress(100);
             setFormData({ title: '', categoryId: '' });
             setSelectedFiles([]);
-            loadData();
-            alert('게시물이 업로드되었습니다!');
+            await loadData();
+
+            // 완료 모달 표시
+            setShowUploadComplete(true);
+            setTimeout(() => {
+                setShowUploadComplete(false);
+                setUploadProgress(0);
+            }, 2000);
         } catch (error) {
             console.error('Error creating post:', error);
             alert('업로드 중 오류가 발생했습니다.');
+            setUploadProgress(0);
         } finally {
             setIsUploading(false);
         }
@@ -110,9 +126,20 @@ const AdminPage = () => {
         }
 
         try {
-            const newAttachment = await addAttachment(editingPost.id, newAttachmentFile);
+            setAttachmentUploadProgress(0);
+            const newAttachment = await addAttachment(editingPost.id, newAttachmentFile, (progress) => {
+                // 진행률을 정확히 반영
+                setAttachmentUploadProgress(Math.min(progress, 100));
+            });
+            // 완료 시 100%로 설정
+            setAttachmentUploadProgress(100);
             setEditAttachments([...editAttachments, newAttachment]);
             setNewAttachmentFile(null);
+
+            // 완료 후 잠시 후 진행률 초기화
+            setTimeout(() => {
+                setAttachmentUploadProgress(0);
+            }, 1000);
             const fileInput = document.getElementById('edit-file-input');
             if (fileInput) fileInput.value = '';
             alert('첨부파일이 추가되었습니다!');
@@ -120,6 +147,7 @@ const AdminPage = () => {
         } catch (error) {
             console.error('Error adding attachment:', error);
             alert('첨부파일 추가 중 오류가 발생했습니다.');
+            setAttachmentUploadProgress(0);
         }
     };
 
@@ -364,8 +392,23 @@ const AdminPage = () => {
                                             color: '#3b82f6',
                                             margin: 0
                                         }}>
-                                            📤 업로드 중입니다...
+                                            📤 업로드 중입니다... {uploadProgress}%
                                         </p>
+                                        <div style={{
+                                            width: '100%',
+                                            height: '8px',
+                                            background: '#e5e7eb',
+                                            borderRadius: '4px',
+                                            marginTop: '12px',
+                                            overflow: 'hidden'
+                                        }}>
+                                            <div style={{
+                                                width: `${uploadProgress}%`,
+                                                height: '100%',
+                                                background: 'linear-gradient(90deg, #3b82f6, #667eea)',
+                                                transition: 'width 0.3s ease'
+                                            }}></div>
+                                        </div>
                                         <p style={{
                                             fontSize: '14px',
                                             color: '#6b7280',
@@ -714,6 +757,27 @@ const AdminPage = () => {
                                                         <Plus style={{ width: '14px', height: '14px' }} /> 추가
                                                     </button>
                                                 </div>
+                                                {attachmentUploadProgress > 0 && attachmentUploadProgress < 100 && (
+                                                    <div style={{ marginTop: '12px' }}>
+                                                        <p style={{ fontSize: '12px', color: '#3b82f6', marginBottom: '6px' }}>
+                                                            업로드 중... {attachmentUploadProgress}%
+                                                        </p>
+                                                        <div style={{
+                                                            width: '100%',
+                                                            height: '6px',
+                                                            background: '#e5e7eb',
+                                                            borderRadius: '3px',
+                                                            overflow: 'hidden'
+                                                        }}>
+                                                            <div style={{
+                                                                width: `${attachmentUploadProgress}%`,
+                                                                height: '100%',
+                                                                background: 'linear-gradient(90deg, #3b82f6, #667eea)',
+                                                                transition: 'width 0.3s ease'
+                                                            }}></div>
+                                                        </div>
+                                                    </div>
+                                                )}
                                             </div>
                                         )}
                                     </div>
@@ -745,6 +809,62 @@ const AdminPage = () => {
                     </div>
                 )
             }
+
+            {/* Upload Complete Modal */}
+            {showUploadComplete && (
+                <div style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    background: 'rgba(0, 0, 0, 0.5)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    zIndex: 1000,
+                    animation: 'fadeIn 0.3s ease'
+                }}>
+                    <div style={{
+                        background: 'white',
+                        borderRadius: '16px',
+                        padding: '40px',
+                        maxWidth: '400px',
+                        width: '90%',
+                        textAlign: 'center',
+                        animation: 'slideUp 0.3s ease'
+                    }}>
+                        <div style={{
+                            width: '80px',
+                            height: '80px',
+                            background: 'linear-gradient(135deg, #10b981 0%, #34d399 100%)',
+                            borderRadius: '50%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            margin: '0 auto 24px',
+                            animation: 'scaleIn 0.5s ease'
+                        }}>
+                            <span style={{ fontSize: '48px' }}>✓</span>
+                        </div>
+                        <h2 style={{
+                            fontSize: '24px',
+                            fontWeight: '700',
+                            color: '#1f2937',
+                            marginBottom: '12px'
+                        }}>
+                            업로드 완료!
+                        </h2>
+                        <p style={{
+                            fontSize: '16px',
+                            color: '#6b7280',
+                            margin: 0
+                        }}>
+                            게시물이 성공적으로 업로드되었습니다.
+                        </p>
+                    </div>
+                </div>
+            )}
         </div >
     );
 };

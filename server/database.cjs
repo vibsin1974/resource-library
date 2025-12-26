@@ -138,6 +138,7 @@ const insertSampleData = () => {
         { name: '문서', icon: '📄', color: '#3b82f6' },
         { name: '이미지', icon: '🖼️', color: '#10b981' },
         { name: '동영상', icon: '🎬', color: '#f59e0b' },
+        { name: '오디오', icon: '🎵', color: '#ec4899' },
         { name: '기타', icon: '📦', color: '#8b5cf6' }
     ];
 

@@ -55,7 +55,7 @@ export const getPost = async (id) => {
     return response.json();
 };
 
-export const createPost = async (title, categoryId, files) => {
+export const createPost = async (title, categoryId, files, onProgress) => {
     const formData = new FormData();
     formData.append('title', title);
     formData.append('category_id', categoryId);
@@ -64,11 +64,40 @@ export const createPost = async (title, categoryId, files) => {
         formData.append('files', file);
     });
 
-    const response = await fetch(`${API_BASE_URL}/posts`, {
-        method: 'POST',
-        body: formData
+    return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+
+        // 업로드 진행률 추적
+        xhr.upload.addEventListener('progress', (e) => {
+            if (e.lengthComputable && onProgress) {
+                const percentComplete = Math.round((e.loaded / e.total) * 100);
+                onProgress(percentComplete);
+            }
+        });
+
+        xhr.addEventListener('load', () => {
+            if (xhr.status >= 200 && xhr.status < 300) {
+                try {
+                    resolve(JSON.parse(xhr.responseText));
+                } catch (e) {
+                    resolve(xhr.responseText);
+                }
+            } else {
+                reject(new Error(`Upload failed with status ${xhr.status}`));
+            }
+        });
+
+        xhr.addEventListener('error', () => {
+            reject(new Error('Upload failed'));
+        });
+
+        xhr.addEventListener('abort', () => {
+            reject(new Error('Upload aborted'));
+        });
+
+        xhr.open('POST', `${API_BASE_URL}/posts`);
+        xhr.send(formData);
     });
-    return response.json();
 };
 
 export const updatePost = async (id, title, categoryId) => {
@@ -115,15 +144,44 @@ export const downloadAttachment = (id, filename) => {
 };
 
 // Attachment management
-export const addAttachment = async (postId, file) => {
+export const addAttachment = async (postId, file, onProgress) => {
     const formData = new FormData();
     formData.append('file', file);
 
-    const response = await fetch(`${API_BASE_URL}/posts/${postId}/attachments`, {
-        method: 'POST',
-        body: formData
+    return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+
+        // 업로드 진행률 추적
+        xhr.upload.addEventListener('progress', (e) => {
+            if (e.lengthComputable && onProgress) {
+                const percentComplete = Math.round((e.loaded / e.total) * 100);
+                onProgress(percentComplete);
+            }
+        });
+
+        xhr.addEventListener('load', () => {
+            if (xhr.status >= 200 && xhr.status < 300) {
+                try {
+                    resolve(JSON.parse(xhr.responseText));
+                } catch (e) {
+                    resolve(xhr.responseText);
+                }
+            } else {
+                reject(new Error(`Upload failed with status ${xhr.status}`));
+            }
+        });
+
+        xhr.addEventListener('error', () => {
+            reject(new Error('Upload failed'));
+        });
+
+        xhr.addEventListener('abort', () => {
+            reject(new Error('Upload aborted'));
+        });
+
+        xhr.open('POST', `${API_BASE_URL}/posts/${postId}/attachments`);
+        xhr.send(formData);
     });
-    return response.json();
 };
 
 export const deleteAttachment = async (attachmentId) => {
